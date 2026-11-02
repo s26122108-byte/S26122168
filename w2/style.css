@@ -1,0 +1,191 @@
+/* 全局樣式設定 */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Fredoka', 'Noto Sans TC', sans-serif;
+  user-select: none;
+}
+
+body {
+  background-color: #FFDE59; /* 活潑鮮黃色 */
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  position: relative;
+  overflow-x: hidden;
+  color: #1A1A1A;
+}
+
+/* 可愛背景幾何圖案 */
+.bg-decor {
+  position: absolute;
+  color: #1A1A1A;
+  opacity: 0.15;
+  font-size: 3rem;
+  pointer-events: none;
+}
+.star-1 { top: 10%; left: 10%; transform: rotate(-15deg); font-size: 4rem; }
+.star-2 { bottom: 15%; left: 12%; transform: rotate(20deg); }
+.star-3 { top: 15%; right: 12%; transform: rotate(10deg); font-size: 3.5rem; }
+.star-4 { bottom: 10%; right: 10%; transform: rotate(-25deg); }
+
+/* 主體卡片容器 (美式卡通漫畫風格) */
+.card {
+  background-color: #FFFFFF;
+  border: 5px solid #1A1A1A;
+  border-radius: 30px;
+  padding: 40px 30px;
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+  box-shadow: 10px 10px 0px #1A1A1A; /* 美式硬陰影 */
+  position: relative;
+  transition: transform 0.2s ease;
+}
+
+/* 可愛小標籤 */
+.badge {
+  display: inline-block;
+  background-color: #000000;
+  color: #FFDE59;
+  font-weight: 900;
+  padding: 6px 16px;
+  border-radius: 50px;
+  font-size: 0.95rem;
+  margin-bottom: 20px;
+  letter-spacing: 1px;
+}
+
+/* 大標題區塊 */
+.title {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: #1A1A1A;
+  margin-bottom: 25px;
+  line-height: 1.3;
+  min-height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  word-break: break-all;
+}
+
+/* 生動彈跳動畫關鍵影格 */
+@keyframes bouncePop {
+  0% {
+    transform: scale(0.3) rotate(-8deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.15) rotate(4deg);
+    opacity: 1;
+  }
+  75% {
+    transform: scale(0.95) rotate(-2deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+/* 抽中結果樣式 */
+.title.animated-title {
+  color: #FF3131; /* 鮮豔紅色驚喜感 */
+  animation: bouncePop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* 結果圖片與容器 */
+.result-box {
+  margin-bottom: 25px;
+  transition: all 0.3s ease;
+}
+
+.result-box.hidden {
+  display: none;
+}
+
+.img-wrapper {
+  width: 100%;
+  height: 220px;
+  border: 4px solid #1A1A1A;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 5px 5px 0px #1A1A1A;
+  margin-bottom: 20px;
+  background-color: #FFF9E6;
+}
+
+.img-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* 地圖按鈕 */
+.map-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: #00E5FF; /* 活潑亮藍色 */
+  color: #1A1A1A;
+  font-weight: 900;
+  font-size: 1.1rem;
+  text-decoration: none;
+  padding: 14px 20px;
+  border: 4px solid #1A1A1A;
+  border-radius: 18px;
+  box-shadow: 4px 4px 0px #1A1A1A;
+  transition: all 0.15s ease;
+}
+
+.map-btn:hover {
+  background-color: #00B8D4;
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px #1A1A1A;
+}
+
+.map-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px #1A1A1A;
+}
+
+/* 主按鈕：點我抽籤 */
+.draw-btn {
+  width: 100%;
+  background-color: #FFDE59;
+  color: #1A1A1A;
+  font-size: 1.5rem;
+  font-weight: 900;
+  padding: 16px;
+  border: 4px solid #1A1A1A;
+  border-radius: 20px;
+  box-shadow: 6px 6px 0px #1A1A1A;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.draw-btn:hover {
+  background-color: #FFE57F;
+  transform: translate(-3px, -3px);
+  box-shadow: 9px 9px 0px #1A1A1A;
+}
+
+.draw-btn:active {
+  transform: translate(3px, 3px);
+  box-shadow: 3px 3px 0px #1A1A1A;
+}
+
+.draw-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
