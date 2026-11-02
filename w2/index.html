@@ -1,50 +1,30 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>今天吃什麼？ - 隨機抽籤機</title>
-  <!-- 載入 Google 字型與 Font Awesome 圖示 -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Noto+Sans+TC:wght@700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <!-- CSS 樣式表連結 -->
-  <link rel="stylesheet" href="style.css">
-  
-  <!-- JavaScript 腳本連結 (使用 defer 確保 DOM 載入後才執行) -->
-  <script src="script.js" defer></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>今天吃什麼？午餐抽籤機</title>
+    <!-- 連結外部 CSS 樣式表 -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- 滿天星/裝飾背景裝飾圖案 -->
-  <div class="bg-decor star-1">★</div>
-  <div class="bg-decor star-2">✦</div>
-  <div class="bg-decor star-3">★</div>
-  <div class="bg-decor star-4">✦</div>
+    <div class="container">
+        <!-- 大標題與抽出來的結果 -->
+        <h1 id="title">今天吃什麼？</h1>
 
-  <div class="card">
-    <div class="badge">美食大輪盤 🍕</div>
-    
-    <!-- 標題區域 -->
-    <h1 id="main-title" class="title">今天吃什麼？</h1>
+        <!-- 食物照片顯示區 (預設隱藏) -->
+        <div id="food-card" class="food-card hidden">
+            <img id="food-img" src="" alt="食物照片">
+            <!-- 馬上出發按鈕 (預設隱藏) -->
+            <a id="map-btn" href="#" target="_blank" class="map-btn hidden">🗺️ 馬上出發 (Google Maps)</a>
+        </div>
 
-    <!-- 抽中結果展示區 (預設隱藏) -->
-    <div id="result-container" class="result-box hidden">
-      <div class="img-wrapper">
-        <img id="food-img" src="" alt="美食圖片">
-      </div>
-      <a id="map-btn" href="#" target="_blank" rel="noopener noreferrer" class="map-btn">
-        <i class="fa-solid fa-location-dot"></i> 馬上出發！ (Google Map)
-      </a>
+        <!-- 抽籤大按鈕 -->
+        <button id="draw-btn">點我抽籤 🎲</button>
     </div>
 
-    <!-- 主按鈕 -->
-    <button id="draw-btn" class="draw-btn">
-      <i class="fa-solid fa-dice"></i> 點我抽籤！
-    </button>
-  </div>
-
+    <!-- 連結外部 JavaScript，並加上 defer 確保載入順序 -->
+    <script src="script.js" defer></script>
 </body>
 </html>
