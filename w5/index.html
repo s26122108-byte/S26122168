@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>雲端心電感應 - 忍法默契大試煉</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <!-- Google Fonts: Permanent Marker & Noto Sans TC -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Permanent+Marker&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            ninja: {
+              bg: '#0a0512',
+              card: '#160d27',
+              border: '#2e1952',
+              purple: '#7e22ce',
+              accent: '#a855f7',
+              red: '#dc2626',
+              gold: '#f59e0b',
+              glow: '#c084fc'
+            }
+          },
+          fontFamily: {
+            ninja: ['"Permanent Marker"', '"Noto Sans TC"', 'sans-serif'],
+            sans: ['"Noto Sans TC"', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0a0512;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #2e1952;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #7e22ce;
+    }
+
+    /* Ninja Chakra Pulse Effect */
+    @keyframes chakra-glow {
+      0%, 100% { box-shadow: 0 0 15px rgba(168, 85, 247, 0.4), inset 0 0 10px rgba(168, 85, 247, 0.2); }
+      50% { box-shadow: 0 0 25px rgba(168, 85, 247, 0.8), inset 0 0 15px rgba(168, 85, 247, 0.4); }
+    }
+    .chakra-active {
+      animation: chakra-glow 2.5s infinite ease-in-out;
+    }
+
+    /* 3D Flip Card Container */
+    .card-scene {
+      perspective: 1000px;
+    }
+    .card-object {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .card-object.is-flipped {
+      transform: rotateY(180deg);
+    }
+    .card-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: 0.75rem;
+    }
+    .card-front {
+      /* Front is the Ninja Seal side shown during 'playing' */
+      transform: rotateY(0deg);
+    }
+    .card-back {
+      /* Back is the revealed answer text side */
+      transform: rotateY(180deg);
+    }
+
+    /* Ninja Seal Background Pattern */
+    .ninja-seal-bg {
+      background-color: #160d27;
+      background-image: radial-gradient(#2e1952 1px, transparent 1px), radial-gradient(#2e1952 1px, #160d27 1px);
+      background-size: 20px 20px;
+      background-position: 0 0, 10px 10px;
+    }
+  </style>
+</head>
+
+<body class="bg-ninja-bg text-gray-100 min-h-screen font-sans flex flex-col justify-between selection:bg-ninja-purple selection:text-white">
+
+  <!-- Top Header / Navigation -->
+  <header class="border-b border-ninja-border bg-ninja-card/80 backdrop-blur-md sticky top-0 z-40 px-4 py-3 shadow-lg shadow-purple-950/40">
+    <div class="max-w-6xl mx-auto flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-900 to-ninja-accent flex items-center justify-center border-2 border-ninja-glow shadow-md shadow-purple-500/50">
+          <i class="fa-solid font-black text-xl text-yellow-400 fa-eye"></i>
+        </div>
+        <div>
+          <h1 class="text-xl md:text-2xl font-black font-ninja tracking-wider bg-gradient-to-r from-purple-300 via-purple-100 to-red-400 bg-clip-text text-transparent">
+            忍法．雲端心電感應
+          </h1>
+          <p class="text-xs text-purple-400">木葉隱村 - 默契奧義傳承</p>
+        </div>
+      </div>
+
+      <!-- Room & User Info Bar (Shown when inside room) -->
+      <div id="nav-info" class="hidden flex items-center space-x-3">
+        <div class="bg-ninja-bg px-3 py-1.5 rounded-lg border border-ninja-border flex items-center space-x-2">
+          <i class="fa-solid fa-scroll text-ninja-accent text-sm"></i>
+          <span class="text-xs text-gray-400">房號:</span>
+          <span id="nav-room-id" class="font-bold text-yellow-400 tracking-wider">----</span>
+          <button onclick="copyRoomLink()" title="複製邀請連結" class="ml-1 text-purple-400 hover:text-white transition">
+            <i class="fa-regular fa-copy"></i>
+          </button>
+        </div>
+        
+        <div class="bg-ninja-bg px-3 py-1.5 rounded-lg border border-ninja-border flex items-center space-x-2">
+          <i class="fa-solid fa-user-ninja text-purple-400 text-sm"></i>
+          <span id="nav-player-name" class="font-semibold text-purple-200 text-sm">--</span>
+        </div>
+
+        <button onclick="leaveRoom()" class="text-xs bg-red-950/60 hover:bg-red-900 border border-red-800 text-red-300 px-2.5 py-1.5 rounded-lg transition">
+          <i class="fa-solid fa-right-from-bracket mr-1"></i>離房
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-6xl mx-auto w-full px-4 py-6 flex-grow flex flex-col items-center">
+
+    <!-- Toast / Notification Alert Box -->
+    <div id="toast-box" class="fixed top-16 right-4 z-50 transition-all duration-300 opacity-0 translate-y-[-20px] pointer-events-none">
+      <div class="bg-purple-950 border-2 border-ninja-accent text-purple-100 px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3">
+        <i id="toast-icon" class="fa-solid fa-circle-info text-ninja-accent text-xl"></i>
+        <span id="toast-msg" class="text-sm font-medium">系統訊息</span>
+      </div>
+    </div>
+
+    <!-- 1. LOBBY / ROOM LOGIN SCREEN -->
+    <section id="screen-lobby" class="w-full max-w-md my-auto bg-ninja-card border border-ninja-border rounded-2xl p-6 md:p-8 shadow-2xl relative overflow-hidden chakra-active">
+      <div class="absolute -right-12 -top-12 w-32 h-32 bg-ninja-purple/20 rounded-full blur-2xl"></div>
+      
+      <div class="text-center mb-6">
+        <span class="inline-block px-3 py-1 bg-purple-950/80 border border-purple-700/50 rounded-full text-xs font-semibold text-purple-300 mb-2">
+          <i class="fa-solid fa-shield-halved mr-1"></i> 多人忍者試煉
+        </span>
+        <h2 class="text-2xl font-bold text-purple-100 font-ninja tracking-wide">進入默契結界</h2>
+        <p class="text-xs text-gray-400 mt-1">請輸入忍道大名與試煉房號</p>
+      </div>
+
+      <form id="form-join" onsubmit="handleJoinRoom(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-purple-300 uppercase tracking-wider mb-2">
+            <i class="fa-solid fa-user-ninja mr-1"></i> 忍者大名 (玩家暱稱)
+          </label>
+          <input type="text" id="input-player-name" required maxlength="12" placeholder="例：漩渦鳴人"
+            class="w-full bg-ninja-bg border border-ninja-border focus:border-ninja-accent focus:ring-1 focus:ring-ninja-accent rounded-xl px-4 py-3 text-sm text-gray-100 outline-none transition placeholder-gray-600" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-purple-300 uppercase tracking-wider mb-2">
+            <i class="fa-solid fa-key mr-1"></i> 結界房號 (Room Code)
+          </label>
+          <div class="flex space-x-2">
+            <input type="text" id="input-room-id" required maxlength="10" placeholder="例如: 8888"
+              class="flex-1 bg-ninja-bg border border-ninja-border focus:border-ninja-accent focus:ring-1 focus:ring-ninja-accent rounded-xl px-4 py-3 text-sm text-gray-100 outline-none transition uppercase tracking-widest placeholder-gray-600 font-mono" />
+            <button type="button" onclick="generateRandomRoom()" class="bg-ninja-border hover:bg-purple-900 text-purple-200 px-3 py-3 rounded-xl text-xs font-semibold border border-purple-700/50 transition flex items-center justify-center space-x-1 whitespace-nowrap">
+              <i class="fa-solid fa-dice"></i>
+              <span>隨機</span>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" id="btn-enter-room" class="w-full mt-4 bg-gradient-to-r from-purple-700 via-ninja-purple to-purple-800 hover:from-purple-600 hover:to-purple-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-purple-900/50 border border-purple-500/40 transition transform active:scale-95 flex items-center justify-center space-x-2">
+          <span>解開結界．登入試煉</span>
+          <i class="fa-solid fa-bolt"></i>
+        </button>
+      </form>
+    </section>
+
+    <!-- 2. GAME MAIN SCREEN (Inside Room) -->
+    <section id="screen-game" class="w-full max-w-5xl hidden flex flex-col space-y-6 my-2">
+      
+      <!-- Current State Banner & Question Display -->
+      <div class="bg-ninja-card border-2 border-ninja-border rounded-2xl p-6 shadow-xl relative overflow-hidden">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-ninja-border pb-4 mb-4">
+          <div class="flex items-center space-x-3">
+            <span id="badge-status" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-purple-900/60 border border-purple-600 text-purple-300">
+              <i class="fa-solid fa-spinner fa-spin mr-1"></i> 讀取中...
+            </span>
+            <span class="text-xs text-gray-400">同步狀態: <span id="polling-indicator" class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span></span>
+          </div>
+
+          <div class="flex items-center space-x-2 text-xs text-purple-400">
+            <i class="fa-solid fa-users"></i>
+            <span>即時線上玩家數: <strong id="player-count" class="text-yellow-400 text-sm">0</strong> 位</span>
+          </div>
+        </div>
+
+        <!-- Question Title Area -->
+        <div class="text-center py-2">
+          <p class="text-xs text-purple-400 uppercase tracking-widest font-semibold mb-1">【 本輪試煉心電題目 】</p>
+          <h2 id="display-question" class="text-2xl md:text-3xl font-black font-ninja text-yellow-300 drop-shadow-md tracking-wide">
+            等待房主出題中...
+          </h2>
+        </div>
+      </div>
+
+      <!-- Player Answer Submission Box (Visible during 'playing' state) -->
+      <div id="box-submit-answer" class="bg-ninja-card/90 border border-purple-800/60 rounded-2xl p-5 shadow-lg">
+        <form id="form-answer" onsubmit="handleAnswerSubmit(event)" class="flex flex-col sm:flex-row gap-3">
+          <input type="text" id="input-player-answer" placeholder="寫下你的心電感應答案..." required maxlength="30"
+            class="flex-1 bg-ninja-bg border border-ninja-border focus:border-ninja-accent rounded-xl px-4 py-3 text-sm text-gray-100 outline-none transition placeholder-gray-600" />
+          <button type="submit" id="btn-submit-ans" class="bg-ninja-purple hover:bg-purple-600 text-white font-bold px-6 py-3 rounded-xl border border-purple-400/50 shadow-md transition flex items-center justify-center space-x-2 whitespace-nowrap">
+            <i class="fa-solid fa-paper-plane"></i>
+            <span id="txt-submit-btn">傳送默契解答</span>
+          </button>
+        </form>
+        <p id="submitted-status" class="text-xs text-emerald-400 mt-2 hidden flex items-center">
+          <i class="fa-solid fa-circle-check mr-1"></i> 已成功傳送答案，可重複修改送出。
+        </p>
+      </div>
+
+      <!-- Cards Grid Area (Players & Answers) -->
+      <div class="w-full">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-bold text-purple-200 flex items-center">
+            <i class="fa-solid fa-clone text-ninja-accent mr-2"></i> 眾忍默契卷軸
+          </h3>
+          <span class="text-xs text-gray-400">翻牌開牌時同步觸發 3D 奧義</span>
+        </div>
+
+        <!-- Dynamic Cards Grid -->
+        <div id="cards-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <!-- Dynamically populated card items -->
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 3. HIDDEN HOST CONTROL PANEL (房主控制台) -->
+  <!-- Hidden Trigger Floating Button -->
+  <button id="btn-host-toggle" onclick="toggleHostConsole()" title="秘術：房主控制台"
+    class="fixed bottom-5 right-5 z-40 w-12 h-12 rounded-full bg-ninja-card border-2 border-purple-600 text-purple-300 hover:text-white hover:border-ninja-accent hover:shadow-lg hover:shadow-purple-600/50 transition flex items-center justify-center group opacity-70 hover:opacity-100">
+    <i class="fa-solid fa-user-gear text-lg group-hover:rotate-45 transition-transform duration-300"></i>
+    <span class="absolute -top-1 -right-1 flex h-3 w-3">
+      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+      <span class="relative inline-flex rounded-full h-3 w-3 bg-purple-500"></span>
+    </span>
+  </button>
+
+  <!-- Host Control Console Modal/Drawer -->
+  <div id="modal-host-console" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-ninja-card border-2 border-purple-500/80 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative chakra-active">
+      <button onclick="toggleHostConsole()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div class="flex items-center space-x-3 border-b border-ninja-border pb-3 mb-5">
+        <div class="w-8 h-8 rounded-lg bg-purple-900 border border-purple-500 flex items-center justify-center text-yellow-400">
+          <i class="fa-solid fa-crown"></i>
+        </div>
+        <div>
+          <h3 class="font-bold text-lg text-purple-100 font-ninja">忍術房主控制台 (秘術面板)</h3>
+          <p class="text-xs text-purple-400">掌握全場題目與開牌奧義</p>
+        </div>
+      </div>
+
+      <div class="space-y-5">
+        <!-- 1. Set Question -->
+        <div class="bg-ninja-bg p-4 rounded-xl border border-ninja-border">
+          <label class="block text-xs font-bold text-purple-300 mb-2">
+            <i class="fa-solid fa-pen-nib mr-1"></i> 設定新題目 (啟用遊戲 playing)
+          </label>
+          <div class="flex space-x-2">
+            <input type="text" id="host-input-question" placeholder="例如: 提到紅色會想到什麼？"
+              class="flex-1 bg-ninja-card border border-ninja-border rounded-lg px-3 py-2 text-sm text-gray-100 outline-none focus:border-ninja-accent" />
+            <button onclick="hostSetQuestion()" class="bg-purple-700 hover:bg-purple-600 text-white text-xs font-bold px-4 py-2 rounded-lg transition whitespace-nowrap">
+              發布題目
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. Game Actions Buttons -->
+        <div class="grid grid-cols-2 gap-3">
+          <button onclick="hostRevealAnswers()" class="w-full bg-gradient-to-r from-yellow-600 to-amber-700 hover:from-yellow-500 hover:to-amber-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg border border-yellow-500/40 transition flex items-center justify-center space-x-2">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            <span>發動！全體開牌</span>
+          </button>
+
+          <button onclick="hostResetRoom()" class="w-full bg-gradient-to-r from-red-900 to-red-950 hover:from-red-800 hover:to-red-900 text-red-200 font-bold py-3 px-4 rounded-xl border border-red-700/60 transition flex items-center justify-center space-x-2">
+            <i class="fa-solid fa-rotate-left"></i>
+            <span>重置房間 (Reset)</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="border-t border-ninja-border py-4 text-center text-xs text-purple-500/70 bg-ninja-bg">
+    忍法．心電感應線上版 &copy; 2026 Telepathy Ninja Realm. All rights reserved.
+  </footer>
+
+  <!-- Vanilla JS App Logic -->
+  <script>
+    // --- Configuration Constants ---
+    const SHEET_NAME = 'TelepathyData';
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbx14ogireZ76ZBQb5m93-8rYO4fIuGKz__OXJ7regs3CzshC59ZBlhQZPFs5bgO8lWBYA/exec";
+    const POLLING_INTERVAL = 2000; // 2 Seconds polling
+
+    // --- State Variables ---
+    let currentRoom = "";
+    let currentPlayerName = "";
+    let pollingTimer = null;
+    let roomData = { status: "setup", question: "", answers: {} };
+    let localAnswer = "";
+
+    // --- On Window Load Init ---
+    window.onload = function() {
+      // Check URL parameters for direct room joining
+      const urlParams = new URLSearchParams(window.location.search);
+      const roomParam = urlParams.get('room');
+      if (roomParam) {
+        document.getElementById('input-room-id').value = roomParam;
+      }
+    };
+
+    // --- Helper UI Functions ---
+    function showToast(message, type = 'info') {
+      const toastBox = document.getElementById('toast-box');
+      const toastMsg = document.getElementById('toast-msg');
+      const toastIcon = document.getElementById('toast-icon');
+
+      toastMsg.textContent = message;
+      if (type === 'success') {
+        toastIcon.className = "fa-solid fa-circle-check text-emerald-400 text-xl";
+      } else if (type === 'error') {
+        toastIcon.className = "fa-solid fa-triangle-exclamation text-red-400 text-xl";
+      } else {
+        toastIcon.className = "fa-solid fa-circle-info text-ninja-accent text-xl";
+      }
+
+      toastBox.classList.remove('opacity-0', 'translate-y-[-20px]', 'pointer-events-none');
+      setTimeout(() => {
+        toastBox.classList.add('opacity-0', 'translate-y-[-20px]', 'pointer-events-none');
+      }, 3000);
+    }
+
+    function generateRandomRoom() {
+      const code = Math.floor(1000 + Math.random() * 9000).toString();
+      document.getElementById('input-room-id').value = code;
+    }
+
+    function copyRoomLink() {
+      const link = `${window.location.origin}${window.location.pathname}?room=${currentRoom}`;
+      const tempInput = document.createElement('input');
+      tempInput.value = link;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempInput);
+      showToast('房間專屬連結已複製到剪貼簿！', 'success');
+    }
+
+    // --- Room Navigation Flow ---
+    function handleJoinRoom(e) {
+      e.preventDefault();
+      const nameInput = document.getElementById('input-player-name').value.trim();
+      const roomInput = document.getElementById('input-room-id').value.trim();
+
+      if (!nameInput || !roomInput) {
+        showToast('請完整輸入忍者大名與房號', 'error');
+        return;
+      }
+
+      currentPlayerName = nameInput;
+      currentRoom = roomInput;
+
+      // Update Nav UI
+      document.getElementById('nav-player-name').textContent = currentPlayerName;
+      document.getElementById('nav-room-id').textContent = currentRoom;
+      document.getElementById('nav-info').classList.remove('hidden');
+
+      // Update URL query string without reloading page
+      const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?room=' + currentRoom;
+      window.history.pushState({path: newUrl}, '', newUrl);
+
+      // Switch Screens
+      document.getElementById('screen-lobby').classList.add('hidden');
+      document.getElementById('screen-game').classList.remove('hidden');
+
+      // Initial Fetch & Start Polling
+      fetchRoomState();
+      startPolling();
+      showToast(`成功加入結界房 【${currentRoom}】！`, 'success');
+    }
+
+    function leaveRoom() {
+      stopPolling();
+      currentRoom = "";
+      document.getElementById('nav-info').classList.add('hidden');
+      document.getElementById('screen-game').classList.add('hidden');
+      document.getElementById('screen-lobby').classList.remove('hidden');
+      
+      // Clean query string
+      const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+      window.history.pushState({path: cleanUrl}, '', cleanUrl);
+    }
+
+    // --- GAS API Communication (Fetch & Polling) ---
+
+    // Polling Loop
+    function startPolling() {
+      if (pollingTimer) clearInterval(pollingTimer);
+      pollingTimer = setInterval(() => {
+        fetchRoomState();
+      }, POLLING_INTERVAL);
+    }
+
+    function stopPolling() {
+      if (pollingTimer) clearInterval(pollingTimer);
+    }
+
+    // GET Request: Fetch Current Room Status
+    function fetchRoomState() {
+      if (!currentRoom) return;
+
+      const indicator = document.getElementById('polling-indicator');
+      indicator.classList.remove('opacity-20');
+
+      fetch(`${GAS_API_URL}?room=${encodeURIComponent(currentRoom)}`, {
+        method: 'GET',
+        mode: 'cors'
+      })
+      .then(res => res.json())
+      .then(data => {
+        indicator.classList.add('opacity-20');
+        if (data) {
+          roomData = data;
+          renderGameUI();
+        }
+      })
+      .catch(err => {
+        indicator.classList.add('opacity-20');
+        console.error("Polling fetch error:", err);
+      });
+    }
+
+    // POST Request Helper
+    function postGASAction(payload) {
+      payload.room = currentRoom;
+
+      return fetch(GAS_API_URL, {
+        method: 'POST',
+        mode: 'cors',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8' // Standard CORS workaround for GAS
+        },
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json());
+    }
+
+    // --- Answer Submission ---
+    function handleAnswerSubmit(e) {
+      e.preventDefault();
+      const ansInput = document.getElementById('input-player-answer').value.trim();
+      if (!ansInput) return;
+
+      const btn = document.getElementById('btn-submit-ans');
+      const btnTxt = document.getElementById('txt-submit-btn');
+      btn.disabled = true;
+      btnTxt.textContent = "傳送中...";
+
+      postGASAction({
+        action: 'submit_answer',
+        playerName: currentPlayerName,
+        answer: ansInput
+      })
+      .then(res => {
+        btn.disabled = false;
+        btnTxt.textContent = "傳送默契解答";
+        if (res.success) {
+          localAnswer = ansInput;
+          document.getElementById('submitted-status').classList.remove('hidden');
+          showToast('解答已成功送入默契結界！', 'success');
+          fetchRoomState(); // Immediate refresh
+        }
+      })
+      .catch(err => {
+        btn.disabled = false;
+        btnTxt.textContent = "傳送默契解答";
+        showToast('傳送失敗，請重試', 'error');
+        console.error(err);
+      });
+    }
+
+    // --- Host Controls API Calls ---
+    function toggleHostConsole() {
+      const modal = document.getElementById('modal-host-console');
+      modal.classList.toggle('hidden');
+    }
+
+    function hostSetQuestion() {
+      const qInput = document.getElementById('host-input-question').value.trim();
+      if (!qInput) {
+        showToast('請輸入題目內容！', 'error');
+        return;
+      }
+
+      postGASAction({
+        action: 'set_question',
+        question: qInput
+      })
+      .then(res => {
+        if (res.success) {
+          showToast('已發布新題目，全場進入回答階段！', 'success');
+          document.getElementById('host-input-question').value = "";
+          toggleHostConsole();
+          fetchRoomState();
+        }
+      });
+    }
+
+    function hostRevealAnswers() {
+      postGASAction({
+        action: 'reveal'
+      })
+      .then(res => {
+        if (res.success) {
+          showToast('已發動全體 3D 開牌奧義！', 'success');
+          toggleHostConsole();
+          fetchRoomState();
+        }
+      });
+    }
+
+    function hostResetRoom() {
+      postGASAction({
+        action: 'reset'
+      })
+      .then(res => {
+        if (res.success) {
+          showToast('房間已重置為初始狀態', 'info');
+          toggleHostConsole();
+          fetchRoomState();
+        }
+      });
+    }
+
+    // --- UI Render Loop (3D Cards & Status Badges) ---
+    function renderGameUI() {
+      const badgeStatus = document.getElementById('badge-status');
+      const displayQuestion = document.getElementById('display-question');
+      const submitBox = document.getElementById('box-submit-answer');
+      const cardsGrid = document.getElementById('cards-grid');
+      const playerCountEl = document.getElementById('player-count');
+
+      // Render Question
+      displayQuestion.textContent = roomData.question || "等待房主出題中...";
+
+      // Render Status Badge
+      if (roomData.status === 'setup') {
+        badgeStatus.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-950/80 border border-amber-600 text-amber-300";
+        badgeStatus.innerHTML = `<i class="fa-solid fa-hourglass-start mr-1"></i> 準備階段 (Setup)`;
+        submitBox.classList.add('hidden');
+      } else if (roomData.status === 'playing') {
+        badgeStatus.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-purple-900/80 border border-purple-500 text-purple-200 animate-pulse";
+        badgeStatus.innerHTML = `<i class="fa-solid fa-pen-ruler mr-1"></i> 忍法思考中 (Playing)`;
+        submitBox.classList.remove('hidden');
+      } else if (roomData.status === 'revealed') {
+        badgeStatus.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-950/80 border border-emerald-500 text-emerald-300";
+        badgeStatus.innerHTML = `<i class="fa-solid fa-eye mr-1"></i> 奧義顯現 (Revealed)`;
+        submitBox.classList.add('hidden');
+      }
+
+      // Render Cards & Answers
+      const answersObj = roomData.answers || {};
+      const playerNames = Object.keys(answersObj);
+      playerCountEl.textContent = playerNames.length;
+
+      if (playerNames.length === 0) {
+        cardsGrid.innerHTML = `
+          <div class="col-span-full py-12 text-center text-purple-400/60 bg-ninja-card/40 border border-dashed border-ninja-border rounded-xl">
+            <i class="fa-solid fa-scroll text-3xl mb-2"></i>
+            <p class="text-sm">尚未有忍者填答卷軸...</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Generate Card Elements with 3D Flip capability
+      let html = "";
+      playerNames.forEach(pName => {
+        const answerText = answersObj[pName];
+        const isFlipped = (roomData.status === 'revealed');
+        const isSelf = (pName === currentPlayerName);
+
+        html += `
+          <div class="card-scene h-44 w-full">
+            <div class="card-object ${isFlipped ? 'is-flipped' : ''}">
+              
+              <!-- Card FRONT (Hidden Answer / Sealed Ninja Scroll) -->
+              <div class="card-face card-front border-2 ${isSelf ? 'border-ninja-accent shadow-lg shadow-purple-600/30' : 'border-ninja-border'} ninja-seal-bg p-4 flex flex-col justify-between items-center text-center">
+                <div class="w-full flex justify-between items-center">
+                  <span class="text-xs px-2 py-0.5 rounded ${isSelf ? 'bg-ninja-purple text-white font-bold' : 'bg-ninja-border text-purple-300'}">
+                    ${isSelf ? '本人' : '忍'}
+                  </span>
+                  <i class="fa-solid fa-certificate text-purple-600/60 text-xs"></i>
+                </div>
+                
+                <div class="my-auto flex flex-col items-center">
+                  <div class="w-12 h-12 rounded-full bg-purple-950 border border-purple-600/60 flex items-center justify-center text-purple-300 mb-1">
+                    <i class="fa-solid fa-user-ninja text-xl"></i>
+                  </div>
+                  <h4 class="font-bold text-sm text-purple-100 truncate max-w-[140px]">${pName}</h4>
+                </div>
+
+                <div class="w-full text-center">
+                  <span class="text-[11px] text-purple-400 font-mono bg-purple-950/80 px-2 py-1 rounded border border-purple-800/40">
+                    <i class="fa-solid fa-lock text-yellow-500/80 mr-1"></i> 已結印解答
+                  </span>
+                </div>
+              </div>
+
+              <!-- Card BACK (Revealed Answer) -->
+              <div class="card-face card-back border-2 border-yellow-500/80 bg-gradient-to-br from-purple-950 via-ninja-card to-purple-900 p-4 flex flex-col justify-between items-center text-center shadow-xl">
+                <div class="w-full flex justify-between items-center">
+                  <span class="text-xs font-semibold text-yellow-400">
+                    <i class="fa-solid fa-bolt mr-1"></i>${pName}
+                  </span>
+                  <i class="fa-solid fa-stamp text-red-500 text-sm"></i>
+                </div>
+
+                <div class="my-auto px-2">
+                  <p class="text-xs text-purple-300 mb-1">心電感應答案：</p>
+                  <p class="text-lg md:text-xl font-black text-yellow-300 font-ninja tracking-wide break-words">
+                    "${answerText}"
+                  </p>
+                </div>
+
+                <div class="text-[10px] text-purple-400 tracking-wider">
+                  忍法．默契顯現
+                </div>
+              </div>
+
+            </div>
+          </div>
+        `;
+      });
+
+      cardsGrid.innerHTML = html;
+    }
+  </script>
+</body>
+</html>
